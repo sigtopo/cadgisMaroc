@@ -28,6 +28,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
   const [inputY, setInputY] = useState('');
   const [coords, setCoords] = useState({ lat: 0, lon: 0 });
   const [isLayersExpanded, setIsLayersExpanded] = useState(false);
+  const [showLoadingMsg, setShowLoadingMsg] = useState(true);
 
   const allProvinces = useMemo(() => Object.keys(PROVINCE_TO_REGION), []);
 
@@ -193,13 +194,17 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
       map.getTargetElement().style.cursor = hit ? 'pointer' : '';
     });
 
+    // Hide message after 2 seconds
+    const timer = setTimeout(() => setShowLoadingMsg(false), 2000);
+
     return () => {
+      clearTimeout(timer);
       if (mapRef.current) {
         mapRef.current.setTarget(undefined);
         mapRef.current = null;
       }
     };
-  }, []); // Run only once
+  }, []);
 
   // Selection Handler (Reactive)
   useEffect(() => {
@@ -316,10 +321,8 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
     if (isNaN(x) || isNaN(y)) return;
 
     if (coordInputMode === 'degrees') {
-      // Input is Lon, Lat
       coord = ol.proj.fromLonLat([x, y]);
     } else {
-      // Input is Web Mercator Meters (standard EPSG:3857)
       coord = [x, y];
     }
 
@@ -338,6 +341,18 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
     <div className="w-full h-full relative group/map overflow-hidden bg-slate-200">
       <div ref={mapElement} className="w-full h-full" />
       
+      {/* Dynamic Instruction Overlay */}
+      {showLoadingMsg && (
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none animate-in fade-out duration-1000 slide-in-from-top-4">
+          <div className="bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-blue-100 flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-blue-900 font-black text-sm uppercase tracking-tight direction-rtl">
+              انتظر حتى تظهر حدود الاقاليم على الخريطة
+            </p>
+          </div>
+        </div>
+      )}
+
       <div 
         ref={popupElement} 
         className={`bg-white shadow-2xl rounded-2xl border border-slate-200 p-6 w-64 z-[500] pointer-events-auto transition-all duration-300 transform origin-bottom ${!selectedProvince ? 'opacity-0 scale-75 translate-y-4 pointer-events-none' : 'opacity-100 scale-100 translate-y-0'}`}
@@ -372,7 +387,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
       </div>
 
       <div className="absolute top-6 right-6 z-[400] flex flex-col items-end gap-3">
-        {/* Layer Switcher */}
         <button 
           onClick={() => setIsLayersExpanded(!isLayersExpanded)}
           className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 flex items-center justify-center text-slate-700 hover:text-blue-600 transition-all active:scale-90"
@@ -395,7 +409,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
           </div>
         )}
 
-        {/* Search Tool */}
         {!isSearchExpanded ? (
           <button 
             onClick={() => setIsSearchExpanded(true)} 
@@ -440,7 +453,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
           </div>
         )}
 
-        {/* Coordinate Tool Button */}
         <button 
           onClick={() => setIsCoordToolExpanded(!isCoordToolExpanded)}
           className={`w-14 h-14 rounded-2xl shadow-2xl border flex items-center justify-center transition-all active:scale-90 ${isCoordToolExpanded ? 'bg-blue-600 text-white border-blue-700' : 'bg-white/95 backdrop-blur-md text-slate-700 border-white/50 hover:text-blue-600'}`}
@@ -449,7 +461,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
           <i className="fas fa-crosshairs text-xl"></i>
         </button>
 
-        {/* Coordinate Input Panel */}
         {isCoordToolExpanded && (
           <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100 p-5 w-72 animate-in fade-in slide-in-from-top-2 text-left">
             <div className="flex justify-between items-center mb-4">
