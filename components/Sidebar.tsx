@@ -91,17 +91,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
         </div>
-        <div className="p-4 bg-slate-900 text-white text-[8px] font-black uppercase tracking-[0.2em] text-center opacity-90">
-          Système de Coordonnées: EPSG:4326
-        </div>
       </aside>
 
       <button 
         onClick={() => setIsMobileDrawerOpen(true)}
-        className="md:hidden fixed bottom-6 left-6 z-[450] w-14 h-14 bg-blue-600 text-white rounded-2xl shadow-2xl flex flex-col items-center justify-center active:scale-95 transition-all"
+        className="md:hidden fixed top-24 left-4 z-[450] w-12 h-12 bg-white/90 backdrop-blur-md text-blue-600 rounded-2xl shadow-xl flex flex-col items-center justify-center active:scale-95 transition-all border border-slate-100"
       >
         <i className="fas fa-list-ul text-lg"></i>
-        <span className="text-[8px] font-black mt-1 uppercase">Liste</span>
+        <span className="text-[7px] font-black mt-0.5 uppercase">Liste</span>
       </button>
 
       {isMobileDrawerOpen && (

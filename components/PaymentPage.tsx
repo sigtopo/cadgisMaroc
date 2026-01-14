@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DOWNLOAD_LINKS } from '../constants';
+
+declare global {
+  interface Window {
+    paypal: any;
+  }
+}
 
 interface PaymentPageProps {
   provinceName: string | null;
@@ -8,6 +14,36 @@ interface PaymentPageProps {
 const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
   const downloadUrl = provinceName ? DOWNLOAD_LINKS[provinceName.toUpperCase()] : null;
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    // PayPal SDK Integration
+    const scriptId = 'paypal-sdk-script';
+    const containerId = '#paypal-container-8ULPDGTMY73CQ';
+    
+    const initPayPal = () => {
+      if (window.paypal && window.paypal.HostedButtons) {
+        // Clear container first if it was already rendered to prevent duplicates
+        const container = document.querySelector(containerId);
+        if (container) container.innerHTML = '';
+        
+        window.paypal.HostedButtons({
+          hostedButtonId: "8ULPDGTMY73CQ"
+        }).render(containerId);
+      }
+    };
+
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = "https://www.paypal.com/sdk/js?client-id=BAA-timiw8NiQJrO_f0A46X1-Ad8umypNF8c0gKUHHbr3qqXUzVLrXHZQJ6yAfE-1PYalzZjPPKP_fxje8&components=hosted-buttons&disable-funding=venmo&currency=EUR";
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      script.onload = initPayPal;
+      document.body.appendChild(script);
+    } else {
+      initPayPal();
+    }
+  }, []);
 
   const copyEmail = () => {
     navigator.clipboard.writeText("jilitsig@gmail.com");
@@ -29,7 +65,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
       <style>{`
         .payment-page-root { font-family: 'Roboto', sans-serif; }
         
-        /* Centered Site Header */
         .site-header {
           background: linear-gradient(135deg, #d97706, #1e40af);
           padding: 2rem;
@@ -70,7 +105,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
           -webkit-text-fill-color: transparent;
         }
 
-        /* 5 Bank Logos Grid - Clear and Balanced */
         .bank-grid { 
           display: grid; grid-template-columns: repeat(5, 1fr); 
           gap: 15px; margin: 10px auto 25px; max-width: 550px; 
@@ -128,7 +162,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
           background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 22px; padding: 25px; margin-bottom: 40px;
         }
 
-        /* Updated Back Button to Light Green */
         .back-nav-btn {
           background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
           padding: 12px 30px; border-radius: 16px; font-weight: 700; font-size: 0.95rem; transition: 0.3s;
@@ -145,6 +178,12 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
 
         .cih-tiny { height: 28px !important; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
+        .paypal-wrapper {
+          margin: 30px auto;
+          max-width: 400px;
+          min-height: 50px;
+        }
+
         @media (max-width: 640px) {
           .bank-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
           .payment-body { padding: 30px 15px; }
@@ -152,7 +191,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
         }
       `}</style>
 
-      {/* CENTERED HEADER SECTION */}
       <header className="site-header">
         <div className="logo-box">
           <img 
@@ -167,7 +205,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
 
       <div className="payment-card animate-in fade-in slide-in-from-bottom-6 duration-700">
         <div className="payment-body">
-          {/* TOP NAVIGATION BUTTON */}
           <div className="text-left mb-5">
             <button onClick={handleReturn} className="back-nav-btn">
               <i className="fas fa-chevron-left"></i>
@@ -183,15 +220,12 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
             <img src="https://wraqi.ma/ui/Images/PaymentCashLogo/daman_cach_logo.png" alt="Damane Cash" />
           </div>
 
-          {/* TOP SECTION: ARABIC TEXT -> 5 LOGOS -> PRICE */}
           <span className="arabic-banner">المبلغ الرمزي للحصول على بيانات إقليم {provinceName} : </span>
           
-
           <div className="price-badge">
             <i className="fas fa-wallet mr-3 opacity-30"></i> 500 DH
           </div>
 
-          {/* DOWNLOAD STATUS SECTION */}
           {provinceName && (
             <div className="status-panel">
               <h6 className="text-primary font-weight-bold text-uppercase mb-3 tracking-widest">
@@ -209,16 +243,13 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
             </div>
           )}
 
-          {/* CIH BANK SECTION */}
           <section>
             <h2 className="section-header">Virement CIH ➜ CIH</h2>
-            
             <div className="d-flex align-items-center justify-content-center mb-4 gap-3">
               <img src="https://credilibre.ma/asset/img/logo-cih.webp" className="cih-tiny" alt="CIH" />
               <i className="fas fa-arrow-right text-muted opacity-30 mx-2"></i>
               <img src="https://credilibre.ma/asset/img/logo-cih.webp" className="cih-tiny" alt="CIH" />
             </div>
-
             <div className="info-card shadow-sm">
               <div className="row">
                 <div className="col-md-7 border-right mb-3 mb-md-0">
@@ -235,7 +266,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
 
           <hr className="my-2 opacity-10" />
 
-          {/* RIB / OTHER BANKS SECTION */}
           <section>
             <h2 className="section-header">Virement depuis autres banques</h2>
             <div className="mb-4">
@@ -250,7 +280,6 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
             </div>
           </section>
 
-          {/* CONTACT ACTIONS */}
           <div className="contact-group">
             <a href="https://wa.me/212668090285" target="_blank" rel="noopener noreferrer" className="btn-whatsapp">
               <i className="fab fa-whatsapp fa-xl"></i>
@@ -266,17 +295,21 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
             </button>
           </div>
 
-          {/* BOTTOM RETURN BUTTON */}
-          <div className="mt-5">
-            <button onClick={handleReturn} className="back-nav-btn">
-              <i className="fas fa-chevron-left"></i>
-              <span>Retour à la carte</span>
-            </button>
+          {/* PayPal Hosted Button Integration */}
+          <div className="paypal-wrapper">
+            <div id="paypal-container-8ULPDGTMY73CQ"></div>
           </div>
 
           <p className="mt-5 text-muted small">
             <i className="fas fa-shield-alt text-success mr-1"></i> Transaction sécurisée • Activation rapide.
           </p>
+
+          <div className="mt-4">
+            <button onClick={handleReturn} className="back-nav-btn">
+              <i className="fas fa-chevron-left"></i>
+              <span>Retour à la carte</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

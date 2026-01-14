@@ -392,13 +392,11 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
         )}
       </div>
 
-      <div className="hidden lg:flex absolute bottom-8 right-28 z-[400] bg-slate-900 text-white px-5 py-2.5 rounded-2xl border border-white/10 shadow-2xl pointer-events-none items-center space-x-3 backdrop-blur-sm opacity-90">
-        <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Coordonnées GPS</span>
-        <div className="w-[1px] h-3 bg-white/20"></div>
-        <p className="text-[10px] font-mono tracking-tight">
-          <span className="text-emerald-400 font-bold">{coords.lat.toFixed(6)}°N</span>
+      <div className="absolute bottom-8 right-28 z-[400] bg-transparent pointer-events-none items-center space-x-3">
+        <p className="text-[10px] font-black tracking-tight text-black">
+          <span className="opacity-60">X:</span> {coords.lon.toFixed(2)}
           <span className="mx-2 opacity-30">|</span>
-          <span className="text-emerald-400 font-bold">{coords.lon.toFixed(6)}°W</span>
+          <span className="opacity-60">Y:</span> {coords.lat.toFixed(2)}
         </p>
       </div>
     </div>
