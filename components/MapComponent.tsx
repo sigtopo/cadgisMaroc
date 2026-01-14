@@ -16,11 +16,16 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
   const overlayRef = useRef<any>(null);
   const vectorSourceRef = useRef<any>(null);
   const vectorLayerRef = useRef<any>(null);
+  const markerLayerRef = useRef<any>(null);
   
   const [baseMap, setBaseMap] = useState<BaseMapType>('OSM');
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [isCoordToolExpanded, setIsCoordToolExpanded] = useState(false);
+  const [coordInputMode, setCoordInputMode] = useState<'meters' | 'degrees'>('degrees');
+  const [inputX, setInputX] = useState('');
+  const [inputY, setInputY] = useState('');
   const [coords, setCoords] = useState({ lat: 0, lon: 0 });
   const [isLayersExpanded, setIsLayersExpanded] = useState(false);
 
@@ -111,6 +116,20 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
     });
     vectorLayerRef.current = vectorLayer;
 
+    // Marker Layer for GoTo function
+    const markerSource = new ol.source.Vector();
+    const markerLayer = new ol.layer.Vector({
+      source: markerSource,
+      style: new ol.style.Style({
+        image: new ol.style.Icon({
+          anchor: [0.5, 1],
+          src: 'https://cdn-icons-png.flaticon.com/512/684/684908.png',
+          scale: 0.06
+        })
+      })
+    });
+    markerLayerRef.current = markerLayer;
+
     const osmLayer = new ol.layer.Tile({ source: new ol.source.OSM(), visible: true, name: 'OSM' });
     const satelliteLayer = new ol.layer.Tile({
       source: new ol.source.XYZ({
@@ -138,7 +157,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
 
     const map = new ol.Map({
       target: mapElement.current,
-      layers: [osmLayer, satelliteLayer, terrainLayer, vectorLayer],
+      layers: [osmLayer, satelliteLayer, terrainLayer, vectorLayer, markerLayer],
       overlays: [overlay],
       view: new ol.View({
         center: ol.proj.fromLonLat([-7.09, 31.79]),
@@ -162,6 +181,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
       } else {
         onProvinceClick(null);
         overlay.setPosition(undefined);
+        markerSource.clear();
       }
     });
 
@@ -185,7 +205,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
   useEffect(() => {
     if (!mapRef.current || !vectorLayerRef.current) return;
     
-    // Update vector styles without rebuilding the whole map
     vectorLayerRef.current.setStyle((feature: any) => {
         const name = getProvinceName(feature);
         const isSelected = name === selectedProvince?.toUpperCase().trim();
@@ -287,6 +306,34 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
     setIsSearchExpanded(false);
   };
 
+  const handleGoToCoords = () => {
+    if (!mapRef.current || !inputX || !inputY) return;
+
+    let coord;
+    const x = parseFloat(inputX);
+    const y = parseFloat(inputY);
+
+    if (isNaN(x) || isNaN(y)) return;
+
+    if (coordInputMode === 'degrees') {
+      // Input is Lon, Lat
+      coord = ol.proj.fromLonLat([x, y]);
+    } else {
+      // Input is Web Mercator Meters (standard EPSG:3857)
+      coord = [x, y];
+    }
+
+    const source = markerLayerRef.current.getSource();
+    source.clear();
+    const feature = new ol.Feature({
+      geometry: new ol.geom.Point(coord)
+    });
+    source.addFeature(feature);
+
+    mapRef.current.getView().animate({ center: coord, zoom: 14, duration: 1200 });
+    setIsCoordToolExpanded(false);
+  };
+
   return (
     <div className="w-full h-full relative group/map overflow-hidden bg-slate-200">
       <div ref={mapElement} className="w-full h-full" />
@@ -325,6 +372,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
       </div>
 
       <div className="absolute top-6 right-6 z-[400] flex flex-col items-end gap-3">
+        {/* Layer Switcher */}
         <button 
           onClick={() => setIsLayersExpanded(!isLayersExpanded)}
           className="w-14 h-14 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 flex items-center justify-center text-slate-700 hover:text-blue-600 transition-all active:scale-90"
@@ -347,6 +395,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
           </div>
         )}
 
+        {/* Search Tool */}
         {!isSearchExpanded ? (
           <button 
             onClick={() => setIsSearchExpanded(true)} 
@@ -388,6 +437,76 @@ const MapComponent: React.FC<MapComponentProps> = ({ selectedProvince, onProvinc
                 ))}
               </ul>
             )}
+          </div>
+        )}
+
+        {/* Coordinate Tool Button */}
+        <button 
+          onClick={() => setIsCoordToolExpanded(!isCoordToolExpanded)}
+          className={`w-14 h-14 rounded-2xl shadow-2xl border flex items-center justify-center transition-all active:scale-90 ${isCoordToolExpanded ? 'bg-blue-600 text-white border-blue-700' : 'bg-white/95 backdrop-blur-md text-slate-700 border-white/50 hover:text-blue-600'}`}
+          title="Aller aux coordonnées"
+        >
+          <i className="fas fa-crosshairs text-xl"></i>
+        </button>
+
+        {/* Coordinate Input Panel */}
+        {isCoordToolExpanded && (
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100 p-5 w-72 animate-in fade-in slide-in-from-top-2 text-left">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-800">Saisie de Coordonnées</span>
+              <button onClick={() => setIsCoordToolExpanded(false)} className="text-slate-300 hover:text-red-500 transition-colors">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="flex bg-slate-100 p-1 rounded-xl mb-4">
+              <button 
+                onClick={() => setCoordInputMode('degrees')}
+                className={`flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${coordInputMode === 'degrees' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
+              >
+                Degrés
+              </button>
+              <button 
+                onClick={() => setCoordInputMode('meters')}
+                className={`flex-1 py-2 text-[9px] font-black uppercase rounded-lg transition-all ${coordInputMode === 'meters' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
+              >
+                Mètres (XY)
+              </button>
+            </div>
+
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="text-[8px] font-black uppercase text-slate-400 mb-1 block">
+                  {coordInputMode === 'degrees' ? 'Longitude (X)' : 'Abscisse X (Easting)'}
+                </label>
+                <input 
+                  type="text" 
+                  value={inputX} 
+                  onChange={(e) => setInputX(e.target.value)}
+                  placeholder={coordInputMode === 'degrees' ? '-7.09' : '500000'}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-[8px] font-black uppercase text-slate-400 mb-1 block">
+                  {coordInputMode === 'degrees' ? 'Latitude (Y)' : 'Ordonnée Y (Northing)'}
+                </label>
+                <input 
+                  type="text" 
+                  value={inputY} 
+                  onChange={(e) => setInputY(e.target.value)}
+                  placeholder={coordInputMode === 'degrees' ? '31.79' : '400000'}
+                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={handleGoToCoords}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-100"
+            >
+              Aller à la position
+            </button>
           </div>
         )}
       </div>
