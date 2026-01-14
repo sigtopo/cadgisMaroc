@@ -6,13 +6,13 @@ const Header: React.FC = () => {
       <div className="flex items-center space-x-3">
         <div className="bg-white rounded-full w-10 h-10 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
           <img 
-            src="https://raw.githubusercontent.com/sigtopo/cadgisMaroc/refs/heads/main/cad-setting-2-opposite.png" 
+            src="https://p7.hiclipart.com/preview/838/297/128/computer-icons-check-mark-cross-clip-art-x-thumbnail.jpg" 
             alt="Logo" 
             className="w-full h-full object-cover"
           />
         </div>
         <div>
-          <h1 className="text-lg md:text-xl font-black tracking-tighter text-white uppercase leading-none">telecharger CadGIS Maroc</h1>
+          <h1 className="text-lg md:text-xl font-black tracking-tighter text-white uppercase leading-none">télécharger données topographique Maroc ©</h1>
           <p className="text-[9px] md:text-xs text-amber-100 hidden sm:block mt-1 font-medium">Titres fonciers | Bornes | Zonage | Limites ADM</p>
         </div>
       </div>

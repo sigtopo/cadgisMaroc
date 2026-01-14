@@ -10,13 +10,13 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
   const [copied, setCopied] = useState(false);
 
   const displayTitle = provinceName 
-    ? `CadGIS Maroc – Province de ${provinceName}` 
-    : "CadGIS Maroc";
+    ? `Données Topographiques – Province de ${provinceName}` 
+    : "télécharger données topographique Maroc ©";
 
   useEffect(() => {
     document.title = displayTitle;
     return () => {
-      document.title = "CadGIS Maroc";
+      document.title = "télécharger données topographique Maroc ©";
     };
   }, [displayTitle]);
 
@@ -38,6 +38,21 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
         .site-header {
           background: linear-gradient(135deg, #d97706, #1e40af);
           padding: 2rem 1rem; color: white; text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .logo-box {
+          background: white;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1rem;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          overflow: hidden;
         }
         .payment-card { 
           width: 92%; max-width: 780px; margin: -20px auto 30px; background: #fff; 
@@ -60,6 +75,13 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ provinceName }) => {
       `}</style>
 
       <header className="site-header">
+        <div className="logo-box">
+          <img 
+            src="https://p7.hiclipart.com/preview/838/297/128/computer-icons-check-mark-cross-clip-art-x-thumbnail.jpg" 
+            alt="Logo" 
+            className="w-full h-full object-cover"
+          />
+        </div>
         <h1 className="h4 font-weight-bold uppercase">{displayTitle}</h1>
       </header>
 
